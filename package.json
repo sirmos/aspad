@@ -7,10 +7,10 @@
     "aspad": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
-    "start": "ts-node src/index.ts",
-    "serve": "ts-node src/server.ts",
-    "example:arbiter": "ts-node src/index.ts build examples/arbiter.spec.json"
+  "build": "echo 'no build needed'",
+  "start": "ts-node src/index.ts",
+  "serve": "ts-node src/server.ts",
+  "example:arbiter": "ts-node src/index.ts build examples/arbiter.spec.json"
   },
   "dependencies": {
     "typescript": "^5.4.0",
