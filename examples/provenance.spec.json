@@ -1,0 +1,12 @@
+{
+  "name": "Provenance",
+  "tagline": "AI-content authenticity notary — know what is real before you trust it.",
+  "description": "Given an image, video, audio, or text, Provenance returns an AI-generation likelihood score and issues a lightweight on-chain provenance stamp that other agents can verify later. As agents increasingly produce and exchange media, knowing what is real becomes critical infrastructure for the agentic economy.",
+  "category": "Software services",
+  "serviceType": "A2MCP",
+  "pricingModel": "paid",
+  "priceUsdt": 0.15,
+  "endpointPath": "/verify",
+  "inputDescription": "A URL or base64-encoded image, video, audio, or text content to verify.",
+  "outputDescription": "An AI-generation likelihood score 0-100, a provenance stamp hash, confidence level, and plain English verdict."
+}
