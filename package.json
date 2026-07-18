@@ -7,7 +7,7 @@
     "aspad": "dist/index.js"
   },
   "scripts": {
-  "build": "echo 'no build needed'",
+  "build": "tsc",
   "start": "ts-node src/index.ts",
   "serve": "ts-node src/server.ts",
   "example:arbiter": "ts-node src/index.ts build examples/arbiter.spec.json"
