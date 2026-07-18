@@ -1,0 +1,20 @@
+{
+  "name": "aspad",
+  "version": "0.1.0",
+  "description": "Turn an idea into a live, compliant ASP for OKX.AI in minutes.",
+  "main": "dist/index.js",
+  "bin": {
+    "aspad": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/index.ts",
+    "serve": "ts-node src/server.ts",
+    "example:arbiter": "ts-node src/index.ts build examples/arbiter.spec.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.11.0"
+  }
+}
