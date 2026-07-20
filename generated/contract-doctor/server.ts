@@ -1,4 +1,4 @@
-﻿import express from "express";
+import express from "express";
 
 const app = express();
 app.use(express.json());
@@ -25,18 +25,106 @@ app.post("/scan", async (req, res) => {
     return;
   }
 
-  // Your actual logic goes here. Replace this stub with the real work.
   const result = await handleRequest(req.body);
   res.json(result);
 });
 
-async function handleRequest(input: unknown): Promise<unknown> {
-  // TODO: write the real logic for ContractDoctor here.
-  return { status: "not implemented yet" };
+interface ScanFlag {
+  op: string;
+  severity: "high" | "medium";
+  note: string;
+}
+
+function scanBytecode(hex: string): ScanFlag[] {
+  let code = hex.startsWith("0x") ? hex.slice(2) : hex;
+  code = code.toLowerCase();
+  const bytes: number[] = [];
+  for (let i = 0; i < code.length; i += 2) {
+    bytes.push(parseInt(code.substr(i, 2), 16));
+  }
+
+  const flags: ScanFlag[] = [];
+  let i = 0;
+  while (i < bytes.length) {
+    const op = bytes[i];
+
+    if (op >= 0x60 && op <= 0x7f) {
+      const dataLength = op - 0x5f;
+      i += 1 + dataLength;
+      continue;
+    }
+
+    if (op === 0xff) {
+      flags.push({
+        op: "SELFDESTRUCT",
+        severity: "high",
+        note: "Contract can be destroyed, funds and state can be wiped.",
+      });
+    }
+    if (op === 0xf4) {
+      flags.push({
+        op: "DELEGATECALL",
+        severity: "medium",
+        note: "Contract can run code from another address in its own context. Common in proxies, but also a common exploit path if the target isn't locked down.",
+      });
+    }
+    if (op === 0xf2) {
+      flags.push({
+        op: "CALLCODE",
+        severity: "medium",
+        note: "Deprecated, legacy version of delegatecall. Same risk, no reason a new contract should use it.",
+      });
+    }
+
+    i += 1;
+  }
+  return flags;
+}
+
+async function handleRequest(input: any): Promise<unknown> {
+  const bytecode = input?.bytecode;
+
+  if (!bytecode) {
+    return {
+      riskScore: null,
+      flags: [],
+      recommendation: "CAUTION",
+      summary:
+        "No bytecode was provided, only an address or chain name. Live fetching of verified source from a block explorer isn't wired in yet. Send the contract's bytecode directly for a real scan.",
+    };
+  }
+
+  const flags = scanBytecode(bytecode);
+
+  let score = 0;
+  for (const flag of flags) {
+    score += flag.severity === "high" ? 40 : 20;
+  }
+  score = Math.min(score, 100);
+
+  const hasHighSeverity = flags.some((f) => f.severity === "high");
+  const recommendation = hasHighSeverity
+    ? "REJECT"
+    : score >= 25
+    ? "CAUTION"
+    : "SAFE";
+
+  const summary =
+    flags.length === 0
+      ? "No high risk opcodes found in this bytecode. That doesn't mean the contract is fully safe, this is a pattern scan, not a full audit, but nothing in the obvious danger list showed up."
+      : `Found ${flags.length} risky pattern(s): ${flags
+          .map((f) => f.op)
+          .join(", ")}. ${flags[0].note}`;
+
+  return {
+    riskScore: score,
+    flags,
+    recommendation,
+    summary,
+  };
 }
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log("ContractDoctor listening on port " + port);
 });
-

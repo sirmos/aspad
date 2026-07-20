@@ -69,8 +69,22 @@ const server = http.createServer(async (req, res) => {
 
   const paid = await checkPayment(req);
   if (!paid) {
-    res.writeHead(402);
-    res.end(JSON.stringify({ error: "payment required, " + PRICE_USDT + " USDT" }));
+    const x402Challenge = {
+      version: "1.0",
+      scheme: "exact",
+      network: "eip155:196",
+      asset: "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+      amount: "500000",
+      decimals: 6,
+      payTo: "0x2c84b6a3af7aeab3fdd368088f5840cee338a4d7",
+      description: "ASPad Build Service - " + PRICE_USDT + " USDT per call"
+    };
+    res.writeHead(402, {
+      'Content-Type': 'application/json',
+      'WWW-Authenticate': 'x402 realm="ASPad Build Service"',
+      'X-Payment-Required': JSON.stringify(x402Challenge)
+    });
+    res.end(JSON.stringify({ error: "payment required", x402: x402Challenge }));
     return;
   }
 

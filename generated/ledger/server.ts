@@ -25,18 +25,91 @@ app.post("/track", async (req, res) => {
     return;
   }
 
-  // Your actual logic goes here. Replace this stub with the real work.
   const result = await handleRequest(req.body);
   res.json(result);
 });
 
-async function handleRequest(input: unknown): Promise<unknown> {
-  // TODO: write the real logic for Ledger here.
-  return { status: "not implemented yet" };
+interface SpendRecord {
+  aspName: string;
+  category: string;
+  amountUsdt: number;
+  timestamp: number;
+}
+
+// In memory for now, so this resets if the service restarts. A real
+// deployment would want this backed by a database instead.
+const walletHistory = new Map<string, SpendRecord[]>();
+const aspAverages = new Map<string, { total: number; count: number }>();
+const budgetStore = new Map<string, number>();
+
+async function handleRequest(input: any): Promise<unknown> {
+  const { aspName, category, amountUsdt, walletAddress, budgetLimitUsdt } = input || {};
+
+  if (!aspName || !category || typeof amountUsdt !== "number" || !walletAddress) {
+    return { error: "aspName, category, amountUsdt, and walletAddress are required" };
+  }
+
+  if (typeof budgetLimitUsdt === "number") {
+    budgetStore.set(walletAddress, budgetLimitUsdt);
+  }
+
+  // Benchmark against this ASP's average price seen so far, before
+  // this call gets folded into the average.
+  const priorAvg = aspAverages.get(aspName);
+  let benchmark: string;
+  if (!priorAvg || priorAvg.count === 0) {
+    benchmark = "first recorded price for this ASP, no benchmark yet";
+  } else {
+    const avg = priorAvg.total / priorAvg.count;
+    const diffPct = ((amountUsdt - avg) / avg) * 100;
+    if (diffPct > 15) {
+      benchmark = `above average (${diffPct.toFixed(1)}% higher than the ${avg.toFixed(4)} USDT average seen for ${aspName})`;
+    } else if (diffPct < -15) {
+      benchmark = `below average (${Math.abs(diffPct).toFixed(1)}% lower than the ${avg.toFixed(4)} USDT average seen for ${aspName})`;
+    } else {
+      benchmark = `in line with average (${avg.toFixed(4)} USDT average seen for ${aspName})`;
+    }
+  }
+  const newAvg = priorAvg
+    ? { total: priorAvg.total + amountUsdt, count: priorAvg.count + 1 }
+    : { total: amountUsdt, count: 1 };
+  aspAverages.set(aspName, newAvg);
+
+  const history = walletHistory.get(walletAddress) || [];
+  history.push({ aspName, category, amountUsdt, timestamp: Date.now() });
+  walletHistory.set(walletAddress, history);
+
+  const cumulativeSpend = history.reduce((sum, r) => sum + r.amountUsdt, 0);
+
+  const categoryBreakdown: Record<string, number> = {};
+  for (const r of history) {
+    categoryBreakdown[r.category] = (categoryBreakdown[r.category] || 0) + r.amountUsdt;
+  }
+
+  const aspNamesInCategory = new Set(
+    history.filter((r) => r.category === category).map((r) => r.aspName)
+  );
+  const duplicateWarning =
+    aspNamesInCategory.size > 1
+      ? `paying ${aspNamesInCategory.size} different ASPs for "${category}": ${[...aspNamesInCategory].join(", ")}`
+      : null;
+
+  const budgetLimit = budgetStore.get(walletAddress);
+  let budgetStatus = "no budget set";
+  if (typeof budgetLimit === "number") {
+    const pct = (cumulativeSpend / budgetLimit) * 100;
+    budgetStatus =
+      pct >= 100
+        ? `OVER budget (${pct.toFixed(0)}% of ${budgetLimit} USDT)`
+        : pct >= 80
+        ? `WARNING, near budget (${pct.toFixed(0)}% of ${budgetLimit} USDT)`
+        : `OK (${pct.toFixed(0)}% of ${budgetLimit} USDT)`;
+  }
+
+  return { cumulativeSpend, categoryBreakdown, duplicateWarning, benchmark, budgetStatus };
 }
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log("Ledger listening on port " + port);
 });
-
