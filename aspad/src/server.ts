@@ -61,6 +61,44 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "GET" && req.url === "/") {
+    res.writeHead(200, { "Content-Type": "text/html" });
+    res.end(`<!DOCTYPE html>
+<html>
+<head><title>ASPad</title>
+<style>body{font-family:sans-serif;max-width:600px;margin:80px auto;padding:20px;background:#0a0908;color:#F5F1EA;}
+h1{color:#C9A86A;}code{background:#1a1a1a;padding:4px 8px;border-radius:4px;color:#C9A86A;}
+.badge{background:#1a1a1a;border:1px solid #C9A86A;border-radius:8px;padding:16px;margin:16px 0;}
+</style></head>
+<body>
+<h1>⚡ ASPad</h1>
+<p>Turn an idea into a live, compliant ASP for OKX.AI in seconds.</p>
+<div class="badge">
+<strong>Endpoint:</strong> <code>POST /build</code><br><br>
+<strong>Price:</strong> 0.50 USDT per call (x402)<br><br>
+<strong>Agent ID:</strong> #6738 on OKX.AI
+</div>
+<h3>How to use</h3>
+<p>Send a POST request to <code>/build</code> with a spec JSON:</p>
+<pre><code>{
+  "name": "MyASP",
+  "tagline": "One line description",
+  "description": "What it does",
+  "category": "Software services",
+  "serviceType": "A2MCP",
+  "pricingModel": "paid",
+  "priceUsdt": 0.10,
+  "endpointPath": "/run",
+  "inputDescription": "What you send",
+  "outputDescription": "What you get back"
+}</code></pre>
+<p>Get back: server code, marketplace listing, registration prompts, and demo script.</p>
+<p style="color:#6b6058;font-size:13px;">Built for the OKX.AI Genesis Hackathon · #OKXAI</p>
+</body>
+</html>`);
+    return;
+  }
+
   if (req.method !== "POST" || req.url !== "/build") {
     res.writeHead(404);
     res.end(JSON.stringify({ error: "not found, POST to /build" }));
