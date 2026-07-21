@@ -53,8 +53,6 @@ function isValidSpec(spec: any): spec is AspSpec {
 }
 
 const server = http.createServer(async (req, res) => {
-  res.setHeader("Content-Type", "application/json");
-
   if (req.method === "GET" && req.url === "/health") {
     res.writeHead(200);
     res.end(JSON.stringify({ status: "ok", name: "ASPad", price: PRICE_USDT }));
