@@ -2,7 +2,7 @@
   "$schema": "https://schema.railway.app/railway-schema.json",
   "build": {
     "builder": "RAILPACK",
-    "buildCommand": "npm install --include=dev && ./node_modules/.bin/tsc"
+    "buildCommand": "npm install --include=dev && npx --yes tsc"
   },
   "deploy": {
     "startCommand": "node dist/server.js",
