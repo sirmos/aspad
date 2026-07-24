@@ -7,14 +7,21 @@
     "aspad": "dist/index.js"
   },
   "scripts": {
-  "build": "tsc",
-  "start": "ts-node src/index.ts",
-  "serve": "ts-node src/server.ts",
-  "example:arbiter": "ts-node src/index.ts build examples/arbiter.spec.json"
+    "build": "tsc",
+    "start": "ts-node src/index.ts",
+    "serve": "ts-node src/server.ts",
+    "example:arbiter": "ts-node src/index.ts build examples/arbiter.spec.json"
   },
   "dependencies": {
+    "express": "^4.19.0",
+    "@x402/express": "^2.0.0",
+    "@x402/evm": "^2.0.0",
+    "@x402/core": "^2.0.0",
     "typescript": "^5.4.0",
-    "ts-node": "^10.9.0",
-    "@types/node": "^20.11.0"
+    "ts-node": "^10.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/express": "^4.17.0"
   }
 }
